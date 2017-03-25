@@ -2,12 +2,128 @@ var makeReport = function(projectFile) {
    var tools = require('./tools.js');
    var project = tools.getModel(projectFile);
    var classes = tools.collectElements(project, "_type", "UMLClass");
-   console.log("project classes:");
+   var totalNumProviders = classes.length;
+   console.log("Total Number of Classes: "+ totalNumProviders)
+   var classArr=[];
+   for (var e in classes){
+      var myClass = new Object();
+      myClass.name=classes[e].name;
+      myClass.id= classes[e]._id;
+      myClass.providers = [];
+      myClass.clients = [];
+      myClass.cohesion = 0;
+      classArr.push(myClass);
+   }
    for(var i in classes) {
-      var methAttAssoc = 0
-      console.log("  " + classes[i].name);
+      console.log("\n\n");
+      console.log("THIS IS THE REPORT FOR :  "+ classes[i].name);
       var ops = tools.collectElements(classes[i], "_type", "UMLOperation");
       var atts = tools.collectElements(classes[i], "_type", "UMLAttribute");
+      var classAssociations = tools.collectElements(classes[i], "_type", "UMLAssociation")
+      var generalizations = tools.collectElements(classes[i], "_type", "UMLGeneralization")
+      var attributeProviders = 0;
+      var operationProviders = 0;
+      var associationProviders = 0;
+      var generalizationProviders = 0;
+      for(var o=0; o<classArr.length;o++){
+        if (classes[i].name == classArr[o].name){
+          var targetClass = classArr[o];
+        }
+      }
+      console.log(targetClass);
+      console.log(targetClass.providers);
+      for (var g in generalizations){
+        for (var c in classes){
+          if (classes[i]._id==classes[c]._id&&classes[c]._id==generalizations[g].source.$ref){
+            for(var o=0; o<classArr.length;o++){
+              if (classes[c].name == classArr[o].name){
+                var targetClass4 = classArr[o];
+              }
+            }
+            for (var z in classes){
+              if (classes[z]._id == generalizations[g].target.$ref){
+                for(var o=0; o<classArr.length;o++){
+                  if (classes[z].name == classArr[o].name){
+                    var targetClass3 = classArr[o];
+                  }
+                }
+                generalizationProviders++;
+                targetClass3.clients.push(classes[c].name);
+                targetClass4.providers.push(classes[c].name);
+                console.log("CLIENTS for: " + classes[z].name+ " :  "+ targetClass3.clients )
+              }
+            }
+          }
+        }
+      }
+      for (var d in classAssociations)
+      console.log(classes[i].name+"'s class associations: "+classAssociations[d].end2.reference.$ref)
+      console.log("target class providers initial value: "+ targetClass.providers)
+      console.log("target class clients initial value: "+ targetClass.clients)
+      for(var a in classAssociations){
+        if (classAssociations[a].end2.navigable==true){
+          associationProviders++;
+          for (var c in classes){
+            if (classes[c]._id==classAssociations[a].end2.reference.$ref){
+              targetClass.providers.push(classes[c].name)
+              for (var u in classes){
+                for(var o=0; o<classArr.length;o++){
+                  if (classes[c].name == classArr[o].name){
+                    var targetClass2 = classArr[o];
+                  }
+                }
+                if (classes[u]._id==classAssociations[a].end1.reference.$ref){
+                  targetClass2.clients.push(classes[u].name);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      for(var k in atts){
+        for(var b in classes){
+          if(atts[k].type==classes[b].name){
+            attributeProviders++
+            targetClass.providers.push(classes[b].name)
+            for (var c in classArr){
+              if(classArr[c].id == classes[b]._id){
+                var targetClass5 = classArr[b];
+                targetClass5.clients.push(classes[b].name)
+              }
+            }
+          }
+        }
+      }
+
+      for(var k in ops) {
+        var params = tools.collectElements(ops[k], "_type", "UMLParameter")
+        for(var z in params){
+          for (var y in classes)
+          if(params[z].type==classes[y].name){
+            operationProviders++;
+            targetClass.providers.push(classes[y].name);
+            for(var h in classArr){
+              if(classArr[h].name==params[z].type){
+                var targetClass6 = classArr[h];
+                targetClass6.clients.push(classes[y].name)
+              }
+            }
+          }
+        }
+      }
+
+      console.log("Number of providers for " + targetClass.name + " by attributes: " + attributeProviders);
+      console.log("Number of providers for " + targetClass.name + " by association endpoint: " + associationProviders);
+      console.log("Number of providers for " + targetClass.name + " by operation parameters: " + operationProviders);
+      console.log("Number of providers for " + targetClass.name + " by generalizations: " + generalizationProviders);
+      console.log("Providers for "+ targetClass.name + ": "+ targetClass.providers + ", for a total of: "+ targetClass.providers.length);
+      numProviders = attributeProviders + associationProviders + operationProviders+generalizationProviders;
+      console.log("Total number of providers for " + classes[i].name+ ": " + numProviders);
+      console.log("Total number of providers in TARGET CLASS: " + targetClass.providers.length);
+      console.log("Total number of clients for TARGET CLASS: " + targetClass.clients.length);
+      console.log(targetClass);
+      var methAttAssoc = 0
       var numAtts = 0
       console.log("    Attributes:");
       for(var j in atts) {
@@ -24,25 +140,35 @@ var makeReport = function(projectFile) {
         var numParam=0
         for (var x in parameters){
           numParam += 1
-          console.log("         " + parameters[x].name )
+          for (var w in classArr){
+            if (classArr[w].id == parameters[x].type.$ref){
+              var type = classArr[w].name
+            }
+          }
+          console.log("         " + parameters[x].name + " of type: "+ type);
           atts.forEach(function(att){
             if (att.name==parameters[x].name){
               methAttAssoc+=1
             }
           })
-          var parameterId= parameters[x].type.$ref;
-          classes.forEach(function(clas) {
-            if(clas._id == parameterId){
-              console.log("            " + clas.name)
-            }
-          })
         }
       }
       var totalPossible = numAtts*numOps;
-      console.log("total possible" + totalPossible)
-      var cohesion = methAttAssoc/totalPossible;
-      console.log(classes[i].name + "'s Cohesion: " +  cohesion);
+      console.log("total possible # of method-attribute connections=" + totalPossible)
+      targetClass.cohesion = methAttAssoc/totalPossible;
+      console.log(totalNumProviders);
+      var instability = targetClass.providers.length/totalNumProviders;
+      var stability = 1 - instability;
+      var responsibility = targetClass.clients.length/totalNumProviders;
+      var deviance = Math.abs(responsibility-stability);
+      console.log(classes[i].name + "'s Cohesion: " +  targetClass.cohesion);
+      console.log(classes[i].name + "'s Instability: " + instability)
+      console.log(classes[i].name + "'s Stability: " +  stability)
+      console.log(classes[i].name + "'s Responsibility: " + responsibility)
+      console.log(classes[i].name + "'s Deviance: " + deviance)
    }
+   console.log('\n\n');
+   console.log(classArr);
 };
 
 var main = function() {
@@ -67,8 +193,8 @@ var table = new Table({
 });
 
 table.push(
-    ['First value', 'Second value']
-  , ['First value', 'Second value']
+    ['First value', 'Second value', 'ThirdValue', 'FourthValue','FifthValue']
+  , ['First value', 'Second value', 'ThirdValue', 'FourthValue','FifthValue']
 );
 
 console.log(table.toString());
