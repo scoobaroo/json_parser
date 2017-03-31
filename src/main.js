@@ -1,9 +1,14 @@
+var Table = require('cli-table2');
+
+var classArray = [];
+
+
 var makeReport = function(projectFile) {
    var tools = require('./tools.js');
    var project = tools.getModel(projectFile);
    var classes = tools.collectElements(project, "_type", "UMLClass");
-   var totalNumProviders = classes.length;
-   console.log("Total Number of Classes: "+ totalNumProviders)
+   var numClasses = classes.length;
+   console.log("Total Number of Classes: "+ numClasses)
    var classArr=[];
    for (var e in classes){
       var myClass = new Object();
@@ -156,20 +161,39 @@ var makeReport = function(projectFile) {
       var totalPossible = numAtts*numOps;
       console.log("total possible # of method-attribute connections=" + totalPossible)
       targetClass.cohesion = methAttAssoc/totalPossible;
-      console.log(totalNumProviders);
-      var instability = targetClass.providers.length/totalNumProviders;
+      var instability = targetClass.providers.length/numClasses;
       var stability = 1 - instability;
-      var responsibility = targetClass.clients.length/totalNumProviders;
+      var responsibility = targetClass.clients.length/numClasses;
       var deviance = Math.abs(responsibility-stability);
       console.log(classes[i].name + "'s Cohesion: " +  targetClass.cohesion);
-      console.log(classes[i].name + "'s Instability: " + instability)
-      console.log(classes[i].name + "'s Stability: " +  stability)
-      console.log(classes[i].name + "'s Responsibility: " + responsibility)
-      console.log(classes[i].name + "'s Deviance: " + deviance)
+      console.log(classes[i].name + "'s Instability: " + instability);
+      console.log(classes[i].name + "'s Stability: " +  stability);
+      console.log(classes[i].name + "'s Responsibility: " + responsibility);
+      console.log(classes[i].name + "'s Deviance: " + deviance) ;
+      classArray= classArr;
    }
    console.log('\n\n');
    console.log(classArr);
+   //GENERATING REPORT HERE
+   var table = new Table({
+       head: ['Class', 'Stability', 'Responsibility', 'Deviance','Cohesion']
+     , colWidths: [100,100,100,100,100]
+   });
+   classArr.forEach(function(clas){
+     var classname = clas.name;
+     var instability = clas.providers.length/numClasses;
+     var stability = 1 - instability;
+     var responsibility = clas.clients.length/numClasses;
+     var deviance = Math.abs(responsibility-stability);
+     var cohesion = clas.cohesion
+     table.push(
+       [classname,stability,responsibility,deviance,cohesion]
+     );
+   });
+   console.log(table.toString());
 };
+
+
 
 var main = function() {
    var readline = require('readline');
@@ -182,21 +206,12 @@ var main = function() {
       makeReport(answer);
       rl.close();
     });
+
+
 };
 
-var Table = require('cli-table2');
+
 
 // instantiate
-var table = new Table({
-    head: ['Classes', 'Cohesion', 'Stability', 'Responsibility', 'Deviance']
-  , colWidths: [100,100,100,100,100]
-});
-
-table.push(
-    ['First value', 'Second value', 'ThirdValue', 'FourthValue','FifthValue']
-  , ['First value', 'Second value', 'ThirdValue', 'FourthValue','FifthValue']
-);
-
-console.log(table.toString());
 
 main();
