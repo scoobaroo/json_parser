@@ -1,8 +1,5 @@
 var Table = require('cli-table2');
 
-var classArray = [];
-
-
 var makeReport = function(projectFile) {
    var tools = require('./tools.js');
    var project = tools.getModel(projectFile);
@@ -61,8 +58,9 @@ var makeReport = function(projectFile) {
           }
         }
       }
-      for (var d in classAssociations)
-      console.log(classes[i].name+"'s class associations: "+classAssociations[d].end2.reference.$ref)
+      for (var d in classAssociations) {
+        console.log(classes[i].name+"'s class associations: "+classAssociations[d].end2.reference.$ref)
+      }
       console.log("target class providers initial value: "+ targetClass.providers)
       console.log("target class clients initial value: "+ targetClass.clients)
       for(var a in classAssociations){
@@ -159,7 +157,7 @@ var makeReport = function(projectFile) {
         }
       }
       var totalPossible = numAtts*numOps;
-      console.log("total possible # of method-attribute connections=" + totalPossible)
+      console.log("Total possible # of method-attribute connections=" + totalPossible)
       targetClass.cohesion = methAttAssoc/totalPossible;
       var instability = targetClass.providers.length/numClasses;
       var stability = 1 - instability;
@@ -170,7 +168,6 @@ var makeReport = function(projectFile) {
       console.log(classes[i].name + "'s Stability: " +  stability);
       console.log(classes[i].name + "'s Responsibility: " + responsibility);
       console.log(classes[i].name + "'s Deviance: " + deviance) ;
-      classArray= classArr;
    }
    console.log('\n\n');
    console.log(classArr);
@@ -201,13 +198,10 @@ var main = function() {
       input: process.stdin,
       output: process.stdout
    });
-
    rl.question("Enter file name: ", function(answer) {
       makeReport(answer);
       rl.close();
     });
-
-
 };
 
 
