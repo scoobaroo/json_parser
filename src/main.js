@@ -16,6 +16,7 @@ var makeReport = function(projectFile) {
       myClass.cohesion = 0;
       classArr.push(myClass);
    }
+   console.log(classArr);
    for(var i in classes) {
       console.log("\n\n");
       console.log("THIS IS THE REPORT FOR :  "+ classes[i].name);
@@ -51,7 +52,7 @@ var makeReport = function(projectFile) {
                 }
                 generalizationProviders++;
                 targetClass3.clients.push(classes[c].name);
-                targetClass4.providers.push(classes[c].name);
+                targetClass4.providers.push(targetClass3.name);
                 console.log("CLIENTS for: " + classes[z].name+ " :  "+ targetClass3.clients )
               }
             }
@@ -84,33 +85,15 @@ var makeReport = function(projectFile) {
         }
       }
 
-      for(var k in atts){
-        for(var b in classes){
-          if(atts[k].type==classes[b].name){
-            attributeProviders++
-            targetClass.providers.push(classes[b].name)
-            for (var c in classArr){
-              if(classArr[c].id == classes[b]._id){
-                var targetClass5 = classArr[b];
-                targetClass5.clients.push(classes[b].name)
-              }
-            }
-          }
-        }
-      }
-
       for(var k in ops) {
         var params = tools.collectElements(ops[k], "_type", "UMLParameter")
         for(var z in params){
-          for (var y in classes)
-          if(params[z].type==classes[y].name){
-            operationProviders++;
-            targetClass.providers.push(classes[y].name);
-            for(var h in classArr){
-              if(classArr[h].name==params[z].type){
-                var targetClass6 = classArr[h];
-                targetClass6.clients.push(classes[y].name)
-              }
+          for (var y in classArr){
+            if(params[z].type.$ref==classArr[y].id){
+              var targetClass3= classArr[y];
+              operationProviders++;
+              targetClass.providers.push(targetClass3.name);
+              targetClass3.clients.push(targetClass.name);
             }
           }
         }
@@ -170,13 +153,19 @@ var makeReport = function(projectFile) {
       console.log(classes[i].name + "'s Deviance: " + deviance) ;
    }
    console.log('\n\n');
+   classArr.forEach(function(clas){
+     clas.clients=Array.from(new Set(clas.clients));
+     clas.providers= Array.from(new Set(clas.providers));
+   });
    console.log(classArr);
    //GENERATING REPORT HERE
    var table = new Table({
-       head: ['Class', 'Stability', 'Responsibility', 'Deviance','Cohesion']
-     , colWidths: [100,100,100,100,100]
+       head: ['Class', 'Stability', 'Responsibility', 'Deviance']
+     , colWidths: [100,100,100,100]
    });
    classArr.forEach(function(clas){
+     clas.clients=Array.from(new Set(clas.clients));
+     clas.providers= Array.from(new Set(clas.providers));
      var classname = clas.name;
      var instability = clas.providers.length/numClasses;
      var stability = 1 - instability;
@@ -184,7 +173,7 @@ var makeReport = function(projectFile) {
      var deviance = Math.abs(responsibility-stability);
      var cohesion = clas.cohesion
      table.push(
-       [classname,stability,responsibility,deviance,cohesion]
+       [classname,stability,responsibility,deviance]
      );
    });
    console.log(table.toString());
